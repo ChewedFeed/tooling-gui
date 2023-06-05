@@ -1,18 +1,61 @@
 package kubernetes
 
-import "github.com/chewedfeed/automated/internal/config"
+import (
+	"context"
+	"fmt"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/homedir"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
 
 type Kubernetes struct {
-	Token string
+	clientset *kubernetes.Clientset
 }
 
 func NewKubernetes() (*Kubernetes, error) {
-	creds, err := config.GetCredentials()
+	cfg, err := clientcmd.BuildConfigFromFlags("", fmt.Sprintf("%s/.kube/config", homedir.HomeDir()))
+	if err != nil {
+		return nil, err
+	}
+
+	clientset, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Kubernetes{
-		Token: creds.Kubernetes.Credentials.Token,
+		clientset: clientset,
 	}, nil
+}
+
+func (k *Kubernetes) GetNamespaces() ([]string, error) {
+	ns, err := k.clientset.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, 0)
+	for _, n := range ns.Items {
+		names = append(names, n.Name)
+	}
+
+	return names, nil
+}
+
+func (k *Kubernetes) CreateSecret(name, namespace string, data map[string]string) error {
+	secretData := make(map[string][]byte)
+	for k, v := range data {
+		secretData[k] = []byte(v)
+	}
+
+	_, err := k.clientset.CoreV1().Secrets(namespace).Create(context.Background(), &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Type: v1.SecretTypeOpaque,
+		Data: secretData,
+	}, metav1.CreateOptions{})
+	return err
 }

@@ -42,6 +42,11 @@ var (
 			AppTitle:  "Vault Database Token",
 			View:      VaultDatabaseTokenView,
 		},
+		"kubernetes_secret": {
+			MenuTitle: "Kubernetes Secret",
+			AppTitle:  "Kubernetes Secret",
+			View:      KubernetesSecretView,
+		},
 	}
 	AppsIndex = map[string][]string{
 		"": {
@@ -55,6 +60,7 @@ var (
 		"kubernetes": {
 			"harbor_registry_secret",
 			"vault_token",
+			"kubernetes_secret",
 		},
 	}
 )
