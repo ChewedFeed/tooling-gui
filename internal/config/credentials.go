@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/pelletier/go-toml/v2"
 	"os"
@@ -61,12 +62,17 @@ func expandUser(path string) (string, error) {
 }
 
 func GetCredentials() (Credentials, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return Credentials{}, err
+	}
+
 	c := Credentials{}
 	credPaths := []string{
 		"./automated.toml",
 		"/etc/automated.toml",
-		"~/.config/automated.toml",
-		"~/Projects/ChewedFeed/Automated/automated.toml",
+		fmt.Sprintf("%s/.config/automated.toml", homeDir),
+		fmt.Sprintf("%s/Projects/ChewedFeed/Automated/automated.toml", homeDir),
 	}
 
 	credPath, err := findFirstExistingFile(credPaths)
