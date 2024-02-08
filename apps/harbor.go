@@ -30,6 +30,7 @@ func getHarborProjects() ([]string, error) {
 func HarborRegistrySecretView(w fyne.Window) fyne.CanvasObject {
   robotName := widget.NewEntry()
   robotName.SetPlaceHolder("Robot Name")
+  robotTypeSelected := ""
 
   harborProjects, err := getHarborProjects()
   if err != nil {
@@ -93,6 +94,8 @@ func HarborRegistrySecretView(w fyne.Window) fyne.CanvasObject {
         return
       }
 
+      robotTypeSelected = robotType.Selected
+
       h, err := harbor.NewHarbor()
       if err != nil {
         fyne.LogError("Failed to create harbor client", err)
@@ -154,7 +157,14 @@ func HarborRegistrySecretView(w fyne.Window) fyne.CanvasObject {
       }
 
       rName := fmt.Sprintf("robot$%s+%s", harborProjectSelect.Selected, robotName.Text)
-      k.CreateDockerSecret("https://containers.chewed-k8s.net", rName, robotSecret.Text, "containers@chewed-k8s.net", kubernetesNamespaceSelect.Selected)
+      if robotTypeSelected == "system" {
+        rName = fmt.Sprintf("robot$%s-%s", harborProjectSelect.Selected, robotName.Text)
+      }
+
+      if err := k.CreateDockerSecret("https://containers.chewed-k8s.net", rName, robotSecret.Text, "containers@chewed-k8s.net", kubernetesNamespaceSelect.Selected); err != nil {
+        fyne.LogError("Failed to create docker secret", err)
+        dialog.ShowError(logs.Local().Errorf("failed to create kubernetes docker secret: %+v", err), w)
+      }
 
       if robotValid {
         logs.Local().Infof("robot details: %+v", robotDetails)
