@@ -1,0 +1,16 @@
+version: "3"
+tasks:
+  build:
+    cmd: fyne package -os linux -sourceDir ./chewedfeed -name ChewedFeed
+  install:
+    cmds:
+      - cp ./automated.toml ~/.config/automated.toml
+      - rm -rf dist
+      - mkdir dist
+      - tar -xvf ./Cgit chewedFeed.tar.xz -C ./dist
+      - cd dist/ && make user-install
+  build-install:
+    cmds:
+      - task: build
+      - task: install
+w
